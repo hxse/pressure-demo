@@ -65,6 +65,13 @@ function App() {
   }
   function onPressure(event: any) {
     // event.preventDefault()
+    // event.stopPropagation();
+
+    let events = event.getCoalescedEvents();
+    for (let e of events) {
+      pointArrayRef.current = [...pointArrayRef.current, [Date.now(), e.offsetX, e.offsetY]]
+    }
+
     setPressure(event.pressure)
     setType(event.pointerType)
     setId(event.pointerId)
@@ -83,7 +90,7 @@ function App() {
     } else {
       setIsDown(false)
     }
-    pointArrayRef.current = [...pointArrayRef.current, [Date.now(), event.offsetX, event.offsetY]]
+
     penObjRef.current = {
       pressure: event.pressure,
       offsetX: event.offsetX,
@@ -118,14 +125,14 @@ function App() {
         const t = p[0]
         const x = p[1]
         const y = p[2]
-        // ctx.moveTo(penObjRef.current.offsetX - 20, penObjRef.current.offsetY - 20);//线条开始位置
-        // ctx.lineTo(penObjRef.current.offsetX + 20, penObjRef.current.offsetY + 20);//线条经过点
+        ctx.moveTo(penObjRef.current.offsetX - 20, penObjRef.current.offsetY - 20);//线条开始位置
+        ctx.lineTo(penObjRef.current.offsetX + 20, penObjRef.current.offsetY + 20);//线条经过点
 
-        if (i == 0) {
-          ctx.moveTo(x - 20, y - 20);//线条开始位置
-        } else {
-          ctx.lineTo(x + 20, y + 20);//线条经过点
-        }
+        // if (i == 0) {
+        //   ctx.moveTo(x - 20, y - 20);//线条开始位置
+        // } else {
+        //   ctx.lineTo(x + 20, y + 20);//线条经过点
+        // }
 
       }
       ctx.lineWidth = 50 // pressure;
