@@ -7,6 +7,8 @@ function App() {
   const divRef = useRef(null);
   const canvasRef = useRef(null);
   const canvasNegativeRef = useRef(null);
+  const pointArrayRef = useRef([]);
+  const penObjRef = useRef({});
 
   const [isDown, setIsDown] = useState(false)
   const [pressure, setPressure] = useState(0)
@@ -23,7 +25,8 @@ function App() {
   const [alpha, setAlpha] = useState(0.7)
 
   const [lastTime, setLastTime] = useState(0)
-  const [spaceTime, setSpaceTime] = useState(20)//ms
+  const [spaceTime, setSpaceTime] = useState(1000 / 16)//ms
+  const [limit, setLimit] = useState(30)
   const [pointArray, setPointArray] = useState([])
 
   useEffect(() => {
@@ -80,9 +83,58 @@ function App() {
     } else {
       setIsDown(false)
     }
+    pointArrayRef.current = [...pointArrayRef.current, [Date.now(), event.offsetX, event.offsetY]]
+    penObjRef.current = {
+      pressure: event.pressure,
+      offsetX: event.offsetX,
+      offsetY: event.offsetY,
+      twist: event.twist,
+      tiltX: event.tiltX,
+      tiltY: event.tiltY,
+    }
   }
 
   useLayoutEffect(() => {
+
+
+    function drawPoint(canvasRef, pointArray) {
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.beginPath();
+      for (let p of pointArray) {
+        const nowtime = p[0]
+        const offsetX = p[1]
+        const offsetY = p[2]
+        ctx.arc(offsetX, offsetY, 15, 0, Math.PI * 2);
+        // ctx.stroke();
+        ctx.fillStyle = `rgba(192, 80, 77, ${penObjRef.current.pressure})`;
+        ctx.closePath()
+      }
+      ctx.fill();
+    }
+    function drawLine(canvasRef, pointArray) {
+      const ctx = canvasRef.current.getContext('2d');
+      ctx.beginPath();
+      for (const [i, p] of pointArray.entries()) {
+        const t = p[0]
+        const x = p[1]
+        const y = p[2]
+        // ctx.moveTo(penObjRef.current.offsetX - 20, penObjRef.current.offsetY - 20);//线条开始位置
+        // ctx.lineTo(penObjRef.current.offsetX + 20, penObjRef.current.offsetY + 20);//线条经过点
+
+        if (i == 0) {
+          ctx.moveTo(x - 20, y - 20);//线条开始位置
+        } else {
+          ctx.lineTo(x + 20, y + 20);//线条经过点
+        }
+
+      }
+      ctx.lineWidth = 50 // pressure;
+      ctx.strokeStyle = `rgba(192, 80, 77, ${penObjRef.current.pressure})`;
+      ctx.stroke();
+      ctx.closePath();//结束绘制线条，不是必须的
+
+    }
+
     // const ctxNegative = canvasNegativeRef.current.getContext('2d');
     const ctx = canvasRef.current.getContext('2d');//如果先获取了2d,那么webgl就是null
     // ctx.globalCompositeOperation = 'source-over';//'darker'; //'lighter';
@@ -90,48 +142,29 @@ function App() {
     ctx.canvas.width = divRef.current.offsetWidth - 4
     ctx.canvas.height = divRef.current.offsetHeight - 24
 
+
+    function render() {
+      pointArrayRef.current.sort((a, b) => a[0] - b[0])
+      console.log(pointArrayRef.current.length)
+      // drawPoint(canvasRef, pointArrayRef.current)
+      drawLine(canvasRef, pointArrayRef.current)
+      pointArrayRef.current = []
+
+      window.requestAnimationFrame(render);
+    }
+    //第一帧渲染
+    window.requestAnimationFrame(render);
+
+
   }, [])
 
 
-  function drawPoint(canvasRef, pointArray) {
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.beginPath();
-    for (let p of pointArray) {
-      const nowtime = p[0]
-      const offsetX = p[1]
-      const offsetY = p[2]
-      ctx.arc(offsetX, offsetY, 15, 0, Math.PI * 2);
-      // ctx.stroke();
-      ctx.fillStyle = `rgba(192, 80, 77, ${pressure * alpha})`;
-      ctx.fill();
-    }
-    ctx.closePath()
-  }
-  function drawLine(canvasRef, pointArray) {
-    const ctx = canvasRef.current.getContext('2d');
-    ctx.beginPath();
-    for (const [i, p] of pointArray.entries()) {
-      const nowtime = p[0]
-      const offsetX = p[1]
-      const offsetY = p[2]
-      ctx.moveTo(offsetX - 10, offsetY - 10);//线条开始位置
-      ctx.lineTo(offsetX + 10, offsetY + 10);//线条经过点
-
-      // if (i == 0) {
-      //   ctx.moveTo(offsetX, offsetY);//线条开始位置
-      // } else {
-      //   ctx.lineTo(offsetX, offsetY);//线条经过点
-      // }
-    }
-    ctx.lineWidth = 30 / pressure;
-    ctx.strokeStyle = `rgba(192, 80, 77, ${pressure * alpha})`;
-    ctx.stroke();
-    ctx.closePath();//结束绘制线条，不是必须的
-  }
   function drawPointWebgl(canvasRef, pointArray) {
   }
 
   useLayoutEffect(() => {
+    //性能有问题, 不如用 requestAnimationFrame
+    return
     //性能有问题, 所以要写个去抖,多少时间后集中画一次
     // const ctxNegative = canvasNegativeRef.current.getContext('2d');
     const nowTime = Date.now()
@@ -146,6 +179,11 @@ function App() {
       } else {
         setPointArray((i) => [...i, [nowTime, offsetX, offsetY]])
       }
+
+      if (pointArray.length >= limit) {
+      } else {
+      }
+
     } else {
       setPointArray([])
     }
