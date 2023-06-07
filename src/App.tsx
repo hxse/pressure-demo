@@ -5,6 +5,7 @@ import './App.css'
 
 function App() {
   const divRef = useRef(null);
+  const cObjRef = useRef(null);
   const canvasRef = useRef(null);
   const canvasNegativeRef = useRef(null);
   const pointArrayRef = useRef([]);
@@ -105,21 +106,24 @@ function App() {
 
 
     function drawPoint(canvasRef, pointArray) {
-      const ctx = canvasRef.current.getContext('2d');
-      ctx.beginPath();
+      cObjRef.current = cObjRef.current ? cObjRef.current : canvasRef.current.getContext('2d');
+      const ctx = cObjRef.current
       for (let p of pointArray) {
+        ctx.beginPath();
+
         const nowtime = p[0]
         const offsetX = p[1]
         const offsetY = p[2]
         ctx.arc(offsetX, offsetY, 15, 0, Math.PI * 2);
+        ctx.closePath()
         // ctx.stroke();
         ctx.fillStyle = `rgba(192, 80, 77, ${penObjRef.current.pressure})`;
-        ctx.closePath()
       }
       ctx.fill();
     }
     function drawLine(canvasRef, pointArray) {
-      const ctx = canvasRef.current.getContext('2d');
+      cObjRef.current = cObjRef.current ? cObjRef.current : canvasRef.current.getContext('2d');
+      const ctx = cObjRef.current
       ctx.beginPath();
       for (const [i, p] of pointArray.entries()) {
         const t = p[0]
@@ -129,21 +133,22 @@ function App() {
         ctx.lineTo(penObjRef.current.offsetX + 20, penObjRef.current.offsetY + 20);//线条经过点
 
         // if (i == 0) {
-        //   ctx.moveTo(x - 20, y - 20);//线条开始位置
+        //   ctx.moveTo(x, y);//线条开始位置
         // } else {
-        //   ctx.lineTo(x + 20, y + 20);//线条经过点
+        //   ctx.lineTo(x, y);//线条经过点
         // }
 
       }
-      ctx.lineWidth = 50 // pressure;
+      ctx.lineWidth = 25 // pressure;
       ctx.strokeStyle = `rgba(192, 80, 77, ${penObjRef.current.pressure})`;
-      ctx.stroke();
       ctx.closePath();//结束绘制线条，不是必须的
+      ctx.stroke();
 
     }
 
     // const ctxNegative = canvasNegativeRef.current.getContext('2d');
-    const ctx = canvasRef.current.getContext('2d');//如果先获取了2d,那么webgl就是null
+    cObjRef.current = cObjRef.current ? cObjRef.current : canvasRef.current.getContext('2d');
+    const ctx = cObjRef.current//如果先获取了2d,那么webgl就是null
     // ctx.globalCompositeOperation = 'source-over';//'darker'; //'lighter';
 
     ctx.canvas.width = divRef.current.offsetWidth - 4
@@ -153,8 +158,8 @@ function App() {
     function render() {
       pointArrayRef.current.sort((a, b) => a[0] - b[0])
       console.log(pointArrayRef.current.length)
-      // drawPoint(canvasRef, pointArrayRef.current)
-      drawLine(canvasRef, pointArrayRef.current)
+      drawPoint(canvasRef, pointArrayRef.current)
+      // drawLine(canvasRef, pointArrayRef.current)
       pointArrayRef.current = []
 
       window.requestAnimationFrame(render);
