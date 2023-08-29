@@ -104,7 +104,6 @@ function App() {
 
   useLayoutEffect(() => {
 
-
     function drawPoint(canvasRef, pointArray) {
       cObjRef.current = cObjRef.current ? cObjRef.current : canvasRef.current.getContext('2d');
       const ctx = cObjRef.current
@@ -118,8 +117,8 @@ function App() {
         ctx.closePath()
         // ctx.stroke();
         ctx.fillStyle = `rgba(192, 80, 77, ${penObjRef.current.pressure})`;
+        ctx.fill();
       }
-      ctx.fill();
     }
     function drawLine(canvasRef, pointArray) {
       cObjRef.current = cObjRef.current ? cObjRef.current : canvasRef.current.getContext('2d');
